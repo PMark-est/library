@@ -7,6 +7,7 @@ import com.nortal.library.core.port.MemberRepository;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class LibraryService {
@@ -52,6 +53,10 @@ public class LibraryService {
     }
 
     Book entity = book.get();
+
+    if (!Objects.equals(entity.getLoanedTo(), memberId)){
+        return ResultWithNext.failure();
+    }
 
     String nextMember =
             entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
