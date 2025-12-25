@@ -310,9 +310,11 @@ public class LibraryService {
       return Result.failure("MEMBER_NOT_FOUND");
     }
 
-    Set<Book> books = existing.get().getLoanedBooks();
+    Set<Book> loanedBooks = existing.get().getLoanedBooks();
+    Set<Book> reservedBooks = existing.get().getReservedBooks();
+
     Member nextMember;
-    for (Book book: books){
+    for (Book book: loanedBooks){
         nextMember = book.getReservationQueue().stream()
                 .filter(this::canMemberBorrow)
                 .findFirst()
@@ -320,6 +322,11 @@ public class LibraryService {
 
         book.setLoanedTo(nextMember);
 
+        bookRepository.save(book);
+    }
+
+    for (Book book: reservedBooks){
+        book.getReservationQueue().remove(existing.get());
         bookRepository.save(book);
     }
 
