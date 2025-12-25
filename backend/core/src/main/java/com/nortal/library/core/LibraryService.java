@@ -68,9 +68,7 @@ public class LibraryService {
         return ResultWithNext.failure();
     }
 
-
     Member nextMember = null;
-
 
     if (entity.getReservationQueue().isEmpty()){
         entity.setLoanedTo(null);
@@ -90,6 +88,10 @@ public class LibraryService {
 
     if (nextMember == null){
       return ResultWithNext.success(null);
+    }
+
+    if (canMemberBorrow(nextMember)) {
+        borrowBook(bookId, nextMember.getId());
     }
 
     return ResultWithNext.success(nextMember.getId());
@@ -310,8 +312,10 @@ public class LibraryService {
       return Result.failure("MEMBER_NOT_FOUND");
     }
 
-    Set<Book> loanedBooks = existing.get().getLoanedBooks();
-    Set<Book> reservedBooks = existing.get().getReservedBooks();
+    Member member = existing.get();
+
+    Set<Book> loanedBooks = member.getLoanedBooks();
+    Set<Book> reservedBooks = member.getReservedBooks();
 
     Member nextMember;
     for (Book book: loanedBooks){
@@ -326,11 +330,11 @@ public class LibraryService {
     }
 
     for (Book book: reservedBooks){
-        book.getReservationQueue().remove(existing.get());
+        book.getReservationQueue().remove(member);
         bookRepository.save(book);
     }
 
-    memberRepository.delete(existing.get());
+    memberRepository.delete(member);
     return Result.success();
   }
 
