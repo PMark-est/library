@@ -139,6 +139,7 @@ public class LibraryService {
     if (!removed) {
       return Result.failure("NOT_RESERVED");
     }
+    borrower.getReservedBooks().remove(entity);
     bookRepository.save(entity);
     return Result.success();
   }
@@ -156,7 +157,7 @@ public class LibraryService {
     return books.size() < MAX_LOANS;
   }
 
-    public boolean canMemberBorrow(Member member) {
+  public boolean canMemberBorrow(Member member) {
       if (member == null){
           return false;
       }
@@ -271,6 +272,11 @@ public class LibraryService {
     Member borrower = book.getLoanedTo();
     borrower.getLoanedBooks().remove(book);
     memberRepository.save(borrower);
+
+    for (Member member: book.getReservationQueue()){
+        member.getReservedBooks().remove(book);
+        memberRepository.save(member);
+    }
 
     bookRepository.delete(book);
     return Result.success();
