@@ -58,18 +58,21 @@ public class LibraryService {
         return ResultWithNext.failure();
     }
 
-    String nextMember =
-            entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
 
-    if (nextMember != null){
-        this.borrowBook(bookId, memberId);
-    } else {
+    String nextMember = null;
+
+    if (entity.getReservationQueue().isEmpty()){
         entity.setLoanedTo(null);
         entity.setDueDate(null);
+    } else {
+        nextMember = entity.getReservationQueue().stream()
+                .filter(this::canMemberBorrow)
+                .findFirst()
+                .orElse(null);
     }
 
-    bookRepository.save(entity);
-    return ResultWithNext.success(nextMember);
+      bookRepository.save(entity);
+      return ResultWithNext.success(nextMember);
   }
 
   public Result reserveBook(String bookId, String memberId) {
