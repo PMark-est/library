@@ -21,10 +21,11 @@ public class LibraryService {
 
   public Result borrowBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
+    Optional<Member> member = memberRepository.findById(memberId);
     if (book.isEmpty()) {
       return Result.failure("BOOK_NOT_FOUND");
     }
-    if (!memberRepository.existsById(memberId)) {
+    if (member.isEmpty()) {
       return Result.failure("MEMBER_NOT_FOUND");
     }
     if (!canMemberBorrow(memberId)) {
@@ -37,7 +38,7 @@ public class LibraryService {
       return Result.failure("BOOK_BORROWED");
     }
 
-    Member borrower = memberRepository.findById(memberId).get();
+    Member borrower = member.get();
 
     entity.setLoanedTo(borrower);
     entity.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
@@ -51,8 +52,14 @@ public class LibraryService {
 
   public ResultWithNext returnBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
+    Optional<Member> member = memberRepository.findById(memberId);
+
     if (book.isEmpty()) {
       return ResultWithNext.failure();
+    }
+
+    if (member.isEmpty()){
+        return ResultWithNext.failure();
     }
 
     Book entity = book.get();
@@ -75,8 +82,8 @@ public class LibraryService {
                 .orElse(null);
 
     }
-    
-    Member borrower = memberRepository.findById(memberId).get();
+
+    Member borrower = member.get();
     borrower.getLoanedBooks().remove(entity);
 
     bookRepository.save(entity);
@@ -90,18 +97,20 @@ public class LibraryService {
 
   public Result reserveBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
+    Optional<Member> member = memberRepository.findById(memberId);
+
     if (book.isEmpty()) {
       return Result.failure("BOOK_NOT_FOUND");
     }
-    if (!memberRepository.existsById(memberId)) {
+    if (member.isEmpty()) {
       return Result.failure("MEMBER_NOT_FOUND");
     }
 
     Book entity = book.get();
-    Member borrower = memberRepository.findById(memberId).get();
+    Member borrower = member.get();
 
-    if (entity.getReservationQueue().isEmpty() & this.canMemberBorrow(memberId)){
-        return this.borrowBook(bookId, memberId);
+    if (entity.getReservationQueue().isEmpty() & canMemberBorrow(memberId)){
+        return borrowBook(bookId, memberId);
     }
 
     if (entity.getReservationQueue().contains(borrower)){
@@ -115,15 +124,17 @@ public class LibraryService {
 
   public Result cancelReservation(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
+    Optional<Member> member = memberRepository.findById(memberId);
+
     if (book.isEmpty()) {
       return Result.failure("BOOK_NOT_FOUND");
     }
-    if (!memberRepository.existsById(memberId)) {
+    if (member.isEmpty()) {
       return Result.failure("MEMBER_NOT_FOUND");
     }
 
     Book entity = book.get();
-    Member borrower = memberRepository.findById(memberId).get();
+    Member borrower = member.get();
     boolean removed = entity.getReservationQueue().remove(borrower);
     if (!removed) {
       return Result.failure("NOT_RESERVED");
@@ -133,11 +144,13 @@ public class LibraryService {
   }
 
   public boolean canMemberBorrow(String memberId) {
-    if (!memberRepository.existsById(memberId)) {
+    Optional<Member> member = memberRepository.findById(memberId);
+
+    if (member.isEmpty()) {
       return false;
     }
 
-    Member borrower = memberRepository.findById(memberId).get();
+    Member borrower = member.get();
     Set<Book> books = borrower.getLoanedBooks();
 
     return books.size() < MAX_LOANS;
@@ -195,10 +208,13 @@ public class LibraryService {
   }
 
   public MemberSummary memberSummary(String memberId) {
-    if (!memberRepository.existsById(memberId)) {
+    Optional<Member> member = memberRepository.findById(memberId);
+
+    if (member.isEmpty()) {
       return new MemberSummary(false, "MEMBER_NOT_FOUND", List.of(), List.of());
     }
-    Member borrower = memberRepository.findById(memberId).get();
+
+    Member borrower = member.get();
     Set<Book> loanedBooks = borrower.getLoanedBooks();
     Set<Book> reservedBooks = borrower.getReservedBooks();
     List<ReservationPosition> reservations = new ArrayList<>();
