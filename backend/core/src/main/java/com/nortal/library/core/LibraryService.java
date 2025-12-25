@@ -64,6 +64,7 @@ public class LibraryService {
 
     Member nextMember = null;
 
+
     if (entity.getReservationQueue().isEmpty()){
         entity.setLoanedTo(null);
         entity.setDueDate(null);
@@ -72,7 +73,11 @@ public class LibraryService {
                 .filter(this::canMemberBorrow)
                 .findFirst()
                 .orElse(null);
+
     }
+    
+    Member borrower = memberRepository.findById(memberId).get();
+    borrower.getLoanedBooks().remove(entity);
 
     bookRepository.save(entity);
 
