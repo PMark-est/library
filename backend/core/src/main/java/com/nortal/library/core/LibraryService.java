@@ -83,6 +83,10 @@ public class LibraryService {
 
     Book entity = book.get();
 
+    if (entity.getReservationQueue().isEmpty() & this.canMemberBorrow(memberId)){
+        return this.borrowBook(bookId, memberId);
+    }
+
     if (entity.getReservationQueue().contains(memberId)){
         return Result.failure("DUPLICATE_RESERVATION");
     }
