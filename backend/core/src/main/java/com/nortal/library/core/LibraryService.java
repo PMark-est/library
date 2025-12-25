@@ -82,6 +82,11 @@ public class LibraryService {
     }
 
     Book entity = book.get();
+
+    if (entity.getReservationQueue().contains(memberId)){
+        return Result.failure("DUPLICATE_RESERVATION");
+    }
+
     entity.getReservationQueue().add(memberId);
     bookRepository.save(entity);
     return Result.success();
