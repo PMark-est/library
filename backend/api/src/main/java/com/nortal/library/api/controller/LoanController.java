@@ -11,6 +11,7 @@ import com.nortal.library.api.dto.ResultWithNextResponse;
 import com.nortal.library.api.dto.ReturnRequest;
 import com.nortal.library.core.LibraryService;
 import com.nortal.library.core.domain.Book;
+import com.nortal.library.core.domain.Member;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -67,12 +68,13 @@ public class LoanController {
         libraryService.overdueBooks(LocalDate.now()).stream().map(this::toResponse).toList());
   }
 
-  private BookResponse toResponse(Book book) {
-    return new BookResponse(
-        book.getId(),
-        book.getTitle(),
-        book.getLoanedTo(),
-        book.getDueDate(),
-        book.getReservationQueue());
-  }
+    private BookResponse toResponse(Book book) {
+        String memberId = book.getLoanedTo() == null ? null : book.getLoanedTo().getId();
+        return new BookResponse(
+            book.getId(),
+            book.getTitle(),
+            memberId,
+            book.getDueDate(),
+            book.getReservationQueue().stream().map(Member::getId).toList());
+    }
 }

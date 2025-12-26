@@ -8,6 +8,7 @@ import com.nortal.library.api.dto.ResultResponse;
 import com.nortal.library.api.dto.UpdateBookRequest;
 import com.nortal.library.core.LibraryService;
 import com.nortal.library.core.domain.Book;
+import com.nortal.library.core.domain.Member;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -63,11 +64,12 @@ public class BookController {
   }
 
   private BookResponse toResponse(Book book) {
+      String memberId = book.getLoanedTo() == null ? null : book.getLoanedTo().getId();
     return new BookResponse(
         book.getId(),
         book.getTitle(),
-        book.getLoanedTo(),
+        memberId,
         book.getDueDate(),
-        book.getReservationQueue());
+        book.getReservationQueue().stream().map(Member::getId).toList());
   }
 }

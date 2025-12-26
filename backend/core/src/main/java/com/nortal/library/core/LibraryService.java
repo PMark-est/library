@@ -46,7 +46,6 @@ public class LibraryService {
 
     borrower.getLoanedBooks().add(entity);
 
-
     return Result.success();
   }
 
@@ -58,27 +57,27 @@ public class LibraryService {
       return ResultWithNext.failure();
     }
 
-    if (member.isEmpty()){
-        return ResultWithNext.failure();
+    if (member.isEmpty()) {
+      return ResultWithNext.failure();
     }
 
     Book entity = book.get();
 
-    if (!Objects.equals(entity.getLoanedTo().getId(), memberId)){
-        return ResultWithNext.failure();
+    if (!Objects.equals(entity.getLoanedTo().getId(), memberId)) {
+      return ResultWithNext.failure();
     }
 
     Member nextMember = null;
 
-    if (entity.getReservationQueue().isEmpty()){
-        entity.setLoanedTo(null);
-        entity.setDueDate(null);
+    if (entity.getReservationQueue().isEmpty()) {
+      entity.setLoanedTo(null);
+      entity.setDueDate(null);
     } else {
-        nextMember = entity.getReservationQueue().stream()
-                .filter(this::canMemberBorrow)
-                .findFirst()
-                .orElse(null);
-
+      nextMember =
+          entity.getReservationQueue().stream()
+              .filter(this::canMemberBorrow)
+              .findFirst()
+              .orElse(null);
     }
 
     Member borrower = member.get();
@@ -86,12 +85,12 @@ public class LibraryService {
 
     bookRepository.save(entity);
 
-    if (nextMember == null){
+    if (nextMember == null) {
       return ResultWithNext.success(null);
     }
 
     if (canMemberBorrow(nextMember)) {
-        borrowBook(bookId, nextMember.getId());
+      borrowBook(bookId, nextMember.getId());
     }
 
     return ResultWithNext.success(nextMember.getId());
@@ -111,12 +110,13 @@ public class LibraryService {
     Book entity = book.get();
     Member borrower = member.get();
 
-    if (entity.getReservationQueue().isEmpty() & canMemberBorrow(memberId)){
-        return borrowBook(bookId, memberId);
+
+    if (isAvailableToBorrow(entity) && canMemberBorrow(memberId)) {
+      return borrowBook(bookId, memberId);
     }
 
-    if (entity.getReservationQueue().contains(borrower)){
-        return Result.failure("DUPLICATE_RESERVATION");
+    if (entity.getReservationQueue().contains(borrower)) {
+      return Result.failure("DUPLICATE_RESERVATION");
     }
 
     entity.getReservationQueue().add(borrower);
@@ -146,6 +146,10 @@ public class LibraryService {
     return Result.success();
   }
 
+  private boolean isAvailableToBorrow(Book book){
+      return book.getLoanedTo() == null & book.getReservationQueue().isEmpty();
+  }
+
   public boolean canMemberBorrow(String memberId) {
     Optional<Member> member = memberRepository.findById(memberId);
 
@@ -160,13 +164,13 @@ public class LibraryService {
   }
 
   public boolean canMemberBorrow(Member member) {
-      if (member == null){
-          return false;
-      }
-      Set<Book> books = member.getLoanedBooks();
-
-      return books.size() < MAX_LOANS;
+    if (member == null) {
+      return false;
     }
+    Set<Book> books = member.getLoanedBooks();
+
+    return books.size() < MAX_LOANS;
+  }
 
   public List<Book> searchBooks(String titleContains, Boolean availableOnly, String loanedTo) {
     return bookRepository.findAll().stream()
@@ -272,12 +276,15 @@ public class LibraryService {
     Book book = existing.get();
 
     Member borrower = book.getLoanedTo();
-    borrower.getLoanedBooks().remove(book);
-    memberRepository.save(borrower);
+    if (borrower != null){
+        borrower.getLoanedBooks().remove(book);
+        memberRepository.save(borrower);
+    }
 
-    for (Member member: book.getReservationQueue()){
-        member.getReservedBooks().remove(book);
-        memberRepository.save(member);
+
+    for (Member member : book.getReservationQueue()) {
+      member.getReservedBooks().remove(book);
+      memberRepository.save(member);
     }
 
     bookRepository.delete(book);
@@ -318,20 +325,21 @@ public class LibraryService {
     Set<Book> reservedBooks = member.getReservedBooks();
 
     Member nextMember;
-    for (Book book: loanedBooks){
-        nextMember = book.getReservationQueue().stream()
-                .filter(this::canMemberBorrow)
-                .findFirst()
-                .orElse(null);
+    for (Book book : loanedBooks) {
+      nextMember =
+          book.getReservationQueue().stream()
+              .filter(this::canMemberBorrow)
+              .findFirst()
+              .orElse(null);
 
-        book.setLoanedTo(nextMember);
+      book.setLoanedTo(nextMember);
 
-        bookRepository.save(book);
+      bookRepository.save(book);
     }
 
-    for (Book book: reservedBooks){
-        book.getReservationQueue().remove(member);
-        bookRepository.save(book);
+    for (Book book : reservedBooks) {
+      book.getReservationQueue().remove(member);
+      bookRepository.save(book);
     }
 
     memberRepository.delete(member);
