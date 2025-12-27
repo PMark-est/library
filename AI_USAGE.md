@@ -1,3 +1,3 @@
 # AI Usage
 
-Briefly describe how you used AI (tools, prompts, code snippets, fixes). Be concise and honest (using AI is fine; it's just a tool; we want to know your method). If you did not use AI, state that here.
+I only used AI to debug a null pointer exception I was getting. I knew where it was but I didn't fully understandy why. The answer was actually pretty simple and I didn't see it because I was tired. Basically I forgot to add a null check in the toResponse function in the controllers when getting book.getLoanedTo().
